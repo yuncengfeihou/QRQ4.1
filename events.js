@@ -477,8 +477,12 @@ export function setupEventListeners() {
         longPressTimer = setTimeout(() => {
             // 计时器完成，说明是长按
             isLongPress = true;
-            console.log(`[${Constants.EXTENSION_NAME}] Long press detected. Opening whitelist panel.`);
-            handleWhitelistButtonClick(); // 执行长按操作
+            console.log(`[${Constants.EXTENSION_NAME}] Long press detected. Scheduling whitelist panel opening.`);
+            
+            // 使用 setTimeout(..., 0) 将UI操作推迟到下一个事件循环
+            // 这样可以避免在触摸事件回调中直接操作DOM可能引发的渲染问题
+            setTimeout(handleWhitelistButtonClick, 0); 
+
         }, LONG_PRESS_DURATION);
     });
 
