@@ -1,14 +1,12 @@
-// events_beast.js (Final Verified Version)
+// events.js (Corrected and Verified Version)
 
 import * as Constants from './constants.js';
 import { sharedState, setMenuVisible } from './state.js';
 import { updateMenuVisibilityUI } from './ui.js';
 // 从 api.js 导入 triggerQuickReply 和新增的 triggerJsRunnerScript
 import { triggerQuickReply, triggerJsRunnerScript } from './api.js';
-// 导入 settings.js 中的函数用于处理设置变化和UI更新
-// --- 更改开始：新增导入 handleWhitelistButtonClick ---
+// 导入 settings.js 中的函数
 import { handleSettingsChange, handleUsageButtonClick, closeUsagePanel, updateIconDisplay, closeWhitelistPanel, handleWhitelistButtonClick } from './settings.js';
-// --- 更改结束 ---
 // 导入 index.js 的设置对象 (用于样式函数)
 import { extension_settings } from './index.js'; // Assuming index.js exports extension_settings
 
@@ -468,47 +466,48 @@ export function setupEventListeners() {
         return;
     }
 
-    // --- 更改开始：实现长按手势逻辑 ---
+    // --- 更改开始：实现稳定可靠的长按与点击逻辑 ---
     let longPressTimer;
     let isLongPress = false;
     const LONG_PRESS_DURATION = 500; // 500ms 定义为长按
 
-    // 监听手指按下
-    rocketButton.addEventListener('touchstart', (event) => {
-        // 阻止默认行为，如在按钮上拖动时页面滚动
-        event.preventDefault();
+    // 监听触摸开始：启动一个计时器
+    rocketButton.addEventListener('touchstart', () => {
         isLongPress = false; // 重置长按标志
-        
         longPressTimer = setTimeout(() => {
-            isLongPress = true; // 计时器完成，标记为长按
+            // 计时器完成，说明是长按
+            isLongPress = true;
             console.log(`[${Constants.EXTENSION_NAME}] Long press detected. Opening whitelist panel.`);
-            handleWhitelistButtonClick(); // 调用打开白名单面板的函数
+            handleWhitelistButtonClick(); // 执行长按操作
         }, LONG_PRESS_DURATION);
-    }, { passive: false }); // 使用 { passive: false } 来允许 preventDefault
-
-    // 监听手指抬起
-    rocketButton.addEventListener('touchend', () => {
-        clearTimeout(longPressTimer); // 无论如何都清除计时器
     });
 
-    // 监听手指移动，如果移动则取消长按
+    // 监听触摸结束：清除计时器
+    rocketButton.addEventListener('touchend', () => {
+        clearTimeout(longPressTimer);
+    });
+
+    // 监听触摸移动：如果手指移动，也清除计时器，取消长按
     rocketButton.addEventListener('touchmove', () => {
         clearTimeout(longPressTimer);
     });
 
-    // 修改原有的 click 监听器，以处理桌面点击和避免移动端的“幽灵点击”
+    // 统一的点击监听器，处理所有情况
     rocketButton.addEventListener('click', (event) => {
         if (isLongPress) {
-            // 如果是长按触发的，阻止后续的 click 事件执行任何操作
+            // 如果刚刚发生了一次长按，那么这个click事件是“幽灵点击”，需要被阻止。
             event.preventDefault();
             event.stopPropagation();
-            isLongPress = false; // 重置标志
+            console.log(`[${Constants.EXTENSION_NAME}] Consuming ghost click after long press.`);
+            isLongPress = false; // 重置标志，为下一次操作做准备
             return;
         }
-        // 如果不是长按，则执行正常的点击操作
+        // 如果不是长按，那么这就是一次正常的点击（桌面端）或短按（移动端）
+        console.log(`[${Constants.EXTENSION_NAME}] Normal click/tap detected.`);
         handleRocketButtonClick();
     });
     // --- 更改结束 ---
+
 
     // Use capture phase for outside click to potentially handle events stopped by other listeners
     document.addEventListener('click', handleOutsideClick, true);
