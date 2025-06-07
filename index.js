@@ -3,7 +3,7 @@ import * as Constants from './constants.js';
 import { sharedState } from './state.js';
 import { createMenuElement } from './ui.js';
 // 从 settings.js 导入核心功能
-import { createSettingsHtml, loadAndApplySettings as loadAndApplySettingsToPanel, updateIconDisplay, saveSettings, populateWhitelistManagementUI } from './settings.js';
+import { createSettingsHtml, loadAndApplySettings as loadAndApplySettingsToPanel, updateIconDisplay, saveSettings, populateWhitelistManagementUI, setupSettingsEventListeners } from './settings.js';
 import { applyWhitelistDOMChanges, observeBarMutations } from './whitelist.js';
 import { setupEventListeners, handleQuickReplyClick, updateMenuStylesUI } from './events.js';
 
@@ -133,7 +133,9 @@ function initializePlugin() {
         };
 
         document.body.appendChild(menu);
-        loadAndApplyInitialSettings();
+        document.body.insertAdjacentHTML('beforeend', createSettingsHtml());
+        loadAndApplySettingsToPanel();
+        setupSettingsEventListeners();
         setupEventListeners();
         // 初始化时就应用一次
         applyWhitelistDOMChanges();
